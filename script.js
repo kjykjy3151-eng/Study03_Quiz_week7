@@ -221,6 +221,43 @@ function recordScore(mode, category, score, date = todayString()) {
   return { saved: true, rank: result.rank };
 }
 
+function renderLeaderboard() {
+  const board = loadLeaderboard();
+  const container = document.getElementById("leaderboard-list");
+  container.replaceChildren();
+  for (const mode of ["speed", "hint"]) {
+    for (const category of CATEGORIES) {
+      const title = document.createElement("h3");
+      title.textContent = `${MODES[mode].name} ${category}`;
+      container.appendChild(title);
+      const list = Array.isArray(board[`${mode}|${category}`]) ? board[`${mode}|${category}`] : [];
+      if (list.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "note";
+        empty.textContent = "기록 없음";
+        container.appendChild(empty);
+        continue;
+      }
+      const total = QUESTIONS.filter(q => q.category === category).length;
+      const table = document.createElement("table");
+      const header = table.insertRow();
+      for (const text of ["순위", "날짜", "점수"]) {
+        const th = document.createElement("th");
+        th.textContent = text;
+        header.appendChild(th);
+      }
+      list.forEach((item, i) => {
+        const row = table.insertRow();
+        for (const text of [`${i + 1}`, item.date, formatScore(item.score, total)]) {
+          row.insertCell().textContent = text;
+        }
+      });
+      container.appendChild(table);
+    }
+  }
+  showScreen("leaderboard");
+}
+
 function retryWrong() {
   if (state.firstScore === null) {
     state.firstScore = { score: state.score, total: state.questions.length };
@@ -245,6 +282,8 @@ function init() {
     stopTimer();
     showScreen("start");
   });
+  document.getElementById("leaderboard-button").addEventListener("click", renderLeaderboard);
+  document.getElementById("leaderboard-home-button").addEventListener("click", () => showScreen("start"));
   showScreen("start");
 }
 
